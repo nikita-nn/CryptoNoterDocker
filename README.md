@@ -1,3 +1,5 @@
+# I AM NOT AUTHOR OF THIS PROJECT, I OPTIMIZED IT AND SWITCHED IT FOR MODERN TECHNOLOGIES
+
 ## IMPORTANT NOTE
 I (JayWalker512, aka Brandon Foltz) am NOT the author of this software. I forked this repository from it's original author (cryptonoter) to serve as a mirror in case they disappeared and deleted their repository (which they did). 
 
